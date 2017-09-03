@@ -1,0 +1,9 @@
+# IntellijIdea files
+*.iml
+.idea
+/.idea/
+target
+.DS_Store
+ImageService.java
+src/main/resources/META-INF/persistence.xml
+src/main/webapp/WEB-INF/app-ctx.xml
