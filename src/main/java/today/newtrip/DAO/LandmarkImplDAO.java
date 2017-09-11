@@ -5,6 +5,7 @@ import today.newtrip.FileServices.ImageService;
 import today.newtrip.Model.Landmark;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Transient;
 import javax.transaction.Transactional;
@@ -25,16 +26,20 @@ public class LandmarkImplDAO implements LandmarkDAO {
     }
 
     public boolean add(Landmark landmark) {
-        if (em.merge(landmark)!=null){
-            return true;
-        }else {
-            return false;
-        }
+        return em.merge(landmark)!=null;
     }
 
     public Landmark getById(long id) {
-        return em.createQuery("SELECT L FROM Landmark L WHERE L.id=:id", Landmark.class).setParameter("id", id)
-                .getSingleResult();
+        Landmark landmark = null;
+        try{
+            landmark = em.createQuery("SELECT L FROM Landmark L WHERE L.id=:id", Landmark.class).setParameter("id", id)
+                    .getSingleResult();
+        }catch (NoResultException e){
+            System.out.println("No entity found for query");
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return landmark;
     }
 
     public void delete(long id) {
@@ -43,11 +48,7 @@ public class LandmarkImplDAO implements LandmarkDAO {
     }
 
     public boolean edit(Landmark landmark) {
-        if (em.merge(landmark)!=null){
-            return true;
-        }else {
-            return false;
-        }
+       return em.merge(landmark)!=null;
     }
 
     public List<Landmark> search(String name) {
@@ -55,8 +56,9 @@ public class LandmarkImplDAO implements LandmarkDAO {
     }
 
     public Landmark getByName(String name) {
-        return em.createQuery("SELECT L FROM Landmark L where L.name=:name", Landmark.class)
+        Landmark landmark = em.createQuery("SELECT L FROM Landmark L where L.name=:name", Landmark.class)
                 .setParameter("name",name).getSingleResult();
+        return landmark!=null?landmark:new Landmark();
     }
 
     public Landmark getByDate(String date) {
