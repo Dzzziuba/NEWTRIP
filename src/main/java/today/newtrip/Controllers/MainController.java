@@ -30,6 +30,19 @@ public class MainController {
     @Autowired
     BCryptPasswordEncoder encoder;
 
+    @RequestMapping(value = "/home", method = RequestMethod.GET)
+    public String homePage(ModelMap model) {
+        if((Landmark)model.get("o")!=null){
+            return  "forward:WEB-INF/Pages/index.jsp";
+        }
+        else {
+            Landmark landmark = landmarkDAO.getFirst();
+            model.addAttribute("o",landmark);
+            model.addAttribute("images", ImageService.getImages(landmark));
+            model.addAttribute("authors", landmark.splitAuthors(landmark.getAuthors()));
+            return "forward:WEB-INF/Pages/index.jsp";
+        }
+    }
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
     public String redirect(HttpServletRequest request) {
