@@ -80,13 +80,14 @@ public class LandmarkImplDAO implements LandmarkDAO {
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
-        List<Long> old = em.createQuery("SELECT L.id FROM Landmark L WHERE L.date<:date",Long.class)
+        List<Landmark> old = em.createQuery("SELECT L FROM Landmark L WHERE L.date<:date",Landmark.class)
                 .setParameter("date",dateFormat.format(date)).getResultList();
         //TODO
         //em.createQuery("DELETE FROM Landmark L WHERE L.id in (:list)").setParameter("list", old);
 
-        for(Long l: old) {
-            em.remove(em.getReference(Landmark.class, l));
+        for(Landmark l: old) {
+            em.remove(em.getReference(Landmark.class, l.getId()));
+            ImageService.deleteFolder(l);
         }
     }
 

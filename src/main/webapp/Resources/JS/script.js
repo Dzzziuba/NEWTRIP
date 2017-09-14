@@ -1,44 +1,5 @@
 function PageConstants() {
-    this.arrayImg = [
-        [
-            '/Resources/img/img1.jpg',         /* bg picture*/
-            'Grand Flowers',        /* text - header */
-            'For thousands of years, the area has been continuosly inhabited by Native Americans, who built settlements whitin the canyon.',
-                                    /* text - description */
-            'KÉVIN VANOVERBERGHE',  /* text - author */
-            '1',                    /* logo */
-            'left',                 /* align for text */
-            'light'                  /* color */
-        ],
-        [
-            '/Resources/img/img2.jpg',
-            '2 - Grand Flowers',
-            '2 - For thousands of years, the area has been continuosly inhabited by Native Americans, who built settlements whitin the canyon.',
-            '2 - KÉVIN VANOVERBERGHE',
-            '2',
-            'right',
-            'dark'
-        ],
-        [
-            '/Resources/img/img3.jpg',
-            '3 - Grand Flowers',
-            '3 - For thousands of years, the area has been continuosly inhabited by Native Americans, who built settlements whitin the canyon.',
-            '3 - KÉVIN VANOVERBERGHE',
-            '1',
-            'center',
-            'light'
-        ],
-        [
-            '/Resources/img/img4.jpg',
-            '4 - Grand Flowers',
-            '4 - For thousands of years, the area has been continuosly inhabited by Native Americans, who built settlements whitin the canyon.',
-            '4 - KÉVIN VANOVERBERGHE',
-            '2',
-            'right',
-            'dark'
-        ]
-    ];
-    this.imgInfoTemplate = '<div class="header">%header%</div><div class="description">%description%</div><div class="author">Photo by %author%</div>';
+    this.imgInfoTemplate = '<div id="img-block-%imgId%" class="img-bg hide" style="background-image:url(\'%imgUrl%\')"></div>';
     this.loader = '<div class="loader">Loading...</div>';
 
 
@@ -46,10 +7,6 @@ function PageConstants() {
     this.headerEl   = $('header');
     this.headerLogo = $('header .logo');
     this.infoEl     = $('#img-info');
-    this.imgBG      = $('.img-bg');
-    this.imgBG2     = $('.img-bg-2');
-    this.imgEl      = $('.img-bg img');
-    this.loaderEl   = '.loader';
 
     this.classes = {
         loadContent : 'load-content',
@@ -57,19 +14,42 @@ function PageConstants() {
         hide        : 'hide'
     };
 
-    this.timerImg   = 15000;
+    this.timerImg   = 30; //seconds
 }
 
 function PageController(pageConstants) {
-    var self    = this,
-        i       = 0,
+    var self        = this,
+        i           = 0,
+        ImgBlocks   = '',
         tempInterval,
-        tempInfoV = '';
+        arrayContent;
 
     this.init = function() {
-        this.blocksSet();
+        this.getContent();
+    };
 
-        this.timerInfo();
+    this.getContent = function() {
+        pageConstants.bodyEl.append(pageConstants.loader);
+
+        $.ajax({
+            url: "/rest/home"
+        })
+            .done(function(data) {
+                arrayContent = data;
+                arrayContent.images = arrayContent.images.split(',');
+
+                pageConstants.infoEl.find('.header').html(arrayContent.name);
+                pageConstants.infoEl.find('.description').html(arrayContent.description);
+                pageConstants.infoEl.find('.author').html('Photo by ' + arrayContent.authors);
+
+                for (var y = 0; y < arrayContent.images.length; y++) {
+                    ImgBlocks = ImgBlocks + pageConstants.imgInfoTemplate.replace('%imgId%', y).replace('%imgUrl%', arrayContent.images[y]);
+                }
+                pageConstants.infoEl.after(ImgBlocks);
+
+                self.blocksSet();
+                self.timerInfo();
+            });
     };
 
     this.blocksSet = function() {
@@ -79,80 +59,45 @@ function PageController(pageConstants) {
     };
 
     this.timerInfo = function() {
-        tempInterval = setInterval(self.blocksSet, pageConstants.timerImg);
+        if (arrayContent.images.length > 1)
+            tempInterval = setInterval(self.blocksSet, pageConstants.timerImg*1000);
     };
 
     this.imgInfoSet = function(i) {
-        var tempInfo = pageConstants.imgInfoTemplate;
-
-        tempInfo = tempInfo.replace('%header%', pageConstants.arrayImg[i][1]);
-        tempInfo = tempInfo.replace('%description%', pageConstants.arrayImg[i][2]);
-        tempInfo = tempInfo.replace('%author%', pageConstants.arrayImg[i][3]);
-
-        tempInfoV = tempInfo;
-
-        if ($(pageConstants.loaderEl).length <= 0) {
-            pageConstants.bodyEl.append(pageConstants.loader);
-        }
-        pageConstants.imgEl.attr('src', pageConstants.arrayImg[i][0]);
-        pageConstants.imgBG.removeClass(pageConstants.classes.show).addClass(pageConstants.classes.hide);
-
-        pageConstants.bodyEl.addClass(pageConstants.classes.loadContent);
-
-        pageConstants.imgEl.on('load', function(e, data) {
-            if (typeof data === "undefined") {
-                return false;
-            } else {
-                var temp = data.count;
-            }
-            if (i != temp || !pageConstants.bodyEl.hasClass(pageConstants.classes.loadContent)) {
-                return false;
-            }
-            setTimeout(loadContent, 1500);
-            pageConstants.bodyEl.removeClass(pageConstants.classes.loadContent);
-        });
-        pageConstants.imgEl.trigger('load', {
-            count: i
-        });
-    };
-
-    var loadContent = function() {
-        pageConstants.imgBG.css({'background-image': 'url('+'/Resources/'+ pageConstants.arrayImg[i][0] +')'});
         pageConstants.infoEl.removeClass(pageConstants.classes.show).addClass(pageConstants.classes.hide);
         pageConstants.headerEl.removeClass(pageConstants.classes.show).addClass(pageConstants.classes.hide);
-        pageConstants.imgBG.removeClass(pageConstants.classes.hide).addClass(pageConstants.classes.show);
 
         setTimeout(function () {
-            pageConstants.bodyEl.removeClass('dark light').addClass(pageConstants.arrayImg[i][6]);
-        }, 2000);
-        setTimeout(hideBgTempContainer, 2500);
+            pageConstants.bodyEl.removeClass('dark light').addClass('light');
+            $('#img-block-'+i).removeClass(pageConstants.classes.hide).addClass(pageConstants.classes.show);
+        }, 1000);
         setTimeout(showLogo, 2000);
         setTimeout(showContent, 2500);
-    };
 
-    var hideBgTempContainer = function() {
-        pageConstants.imgBG2.css({'background-image': 'url('+'/Resources/'+ pageConstants.arrayImg[i][0] +')'});
-        pageConstants.imgBG.removeClass(pageConstants.classes.show).addClass(pageConstants.classes.hide);
+        setTimeout(function () {
+            for (var y = 0; y < arrayContent.images.length; y++) {
+                if (y !== i) {
+                    $('#img-block-' + y).removeClass(pageConstants.classes.show).addClass(pageConstants.classes.hide);
+                }
+            }
+        }, 1500);
     };
 
     var showLogo = function() {
         if (pageConstants.headerEl.hasClass('zi-1'))
             pageConstants.headerEl.removeClass('zi-1');
-        pageConstants.headerLogo.removeClass('newtrip-1 newtrip-2 newtrip-1w newtrip-2w opacity2 center right').addClass('newtrip-' + pageConstants.arrayImg[i][4]);
+        pageConstants.headerLogo.removeClass('newtrip-1 newtrip-2 newtrip-1w newtrip-2w opacity2 center right').addClass('newtrip-' + "1");
         pageConstants.headerEl.removeClass(pageConstants.classes.hide).addClass(pageConstants.classes.show);
     };
 
     var showContent = function() {
-        pageConstants.infoEl.removeClass('right left center').addClass(pageConstants.arrayImg[i][5]).html(tempInfoV);
         pageConstants.infoEl.removeClass(pageConstants.classes.hide).addClass(pageConstants.classes.show);
 
-        if (i >= pageConstants.arrayImg.length - 1) {
+        if (i >= arrayContent.images.length - 1) {
             i = 0;
         } else {
             i++;
         }
-
-        pageConstants.imgEl.attr('src', pageConstants.arrayImg[i][0]);
     };
 
     this.randomInteger = function(min, max) {
